@@ -24,6 +24,7 @@ import six
 import uuid
 from decorator import decorate
 import hashlib
+from typing import List
 
 IMPL_HAS_CRYPTO = True
 try:
@@ -61,6 +62,8 @@ try:
 except:
     class PurePath:
         pass
+
+from mastodon.models import Account
 
 ###
 # Version check functions, including decorator and parser
@@ -1061,7 +1064,7 @@ class Mastodon:
         return self.__api_request('GET', url)
 
     @api_version("1.0.0", "2.1.0", __DICT_VERSION_ACCOUNT)
-    def status_reblogged_by(self, id):
+    def status_reblogged_by(self, id) -> List[Account]:
         """
         Fetch a list of users that have reblogged a status.
 
@@ -1071,10 +1074,10 @@ class Mastodon:
         """
         id = self.__unpack_id(id)
         url = '/api/v1/statuses/{0}/reblogged_by'.format(str(id))
-        return self.__api_request('GET', url)
+        return Account.from_list(self.__api_request('GET', url))
 
     @api_version("1.0.0", "2.1.0", __DICT_VERSION_ACCOUNT)
-    def status_favourited_by(self, id):
+    def status_favourited_by(self, id) -> List[Account]:
         """
         Fetch a list of users that have favourited a status.
 
@@ -1084,7 +1087,7 @@ class Mastodon:
         """
         id = self.__unpack_id(id)
         url = '/api/v1/statuses/{0}/favourited_by'.format(str(id))
-        return self.__api_request('GET', url)
+        return Account.from_list(self.__api_request('GET', url))
 
     ###
     # Reading data: Scheduled statuses
@@ -1187,7 +1190,7 @@ class Mastodon:
     # Reading data: Accounts
     ###
     @api_version("1.0.0", "1.0.0", __DICT_VERSION_ACCOUNT)
-    def account(self, id):
+    def account(self, id) -> Account:
         """
         Fetch account information by user `id`.
 
@@ -1197,19 +1200,19 @@ class Mastodon:
         """
         id = self.__unpack_id(id)
         url = '/api/v1/accounts/{0}'.format(str(id))
-        return self.__api_request('GET', url)
+        return Account(**self.__api_request('GET', url))
 
     @api_version("1.0.0", "2.1.0", __DICT_VERSION_ACCOUNT)
-    def account_verify_credentials(self):
+    def account_verify_credentials(self) -> Account:
         """
         Fetch logged-in user's account information.
 
         Returns a `account dict`_ (Starting from 2.1.0, with an additional "source" field).
         """
-        return self.__api_request('GET', '/api/v1/accounts/verify_credentials')
+        return Account(**self.__api_request('GET', '/api/v1/accounts/verify_credentials'))
 
     @api_version("1.0.0", "2.1.0", __DICT_VERSION_ACCOUNT)
-    def me(self):
+    def me(self) -> Account:
         """
         Get this user's account. Synonym for `account_verify_credentials()`, does exactly
         the same thing, just exists becase `account_verify_credentials()` has a confusing
@@ -1261,7 +1264,7 @@ class Mastodon:
         return self.__api_request('GET', url, params)
 
     @api_version("1.0.0", "2.6.0", __DICT_VERSION_ACCOUNT)
-    def account_following(self, id, max_id=None, min_id=None, since_id=None, limit=None):
+    def account_following(self, id, max_id=None, min_id=None, since_id=None, limit=None) -> List[Account]:
         """
         Fetch users the given user is following.
 
@@ -1279,10 +1282,10 @@ class Mastodon:
 
         params = self.__generate_params(locals(), ['id'])
         url = '/api/v1/accounts/{0}/following'.format(str(id))
-        return self.__api_request('GET', url, params)
+        return Account.from_list(self.__api_request('GET', url, params))
 
     @api_version("1.0.0", "2.6.0", __DICT_VERSION_ACCOUNT)
-    def account_followers(self, id, max_id=None, min_id=None, since_id=None, limit=None):
+    def account_followers(self, id, max_id=None, min_id=None, since_id=None, limit=None) -> List[Account]:
         """
         Fetch users the given user is followed by.
 
@@ -1300,7 +1303,7 @@ class Mastodon:
 
         params = self.__generate_params(locals(), ['id'])
         url = '/api/v1/accounts/{0}/followers'.format(str(id))
-        return self.__api_request('GET', url, params)
+        return Account.from_list(self.__api_request('GET', url, params))
 
     @api_version("1.0.0", "1.4.0", __DICT_VERSION_RELATIONSHIP)
     def account_relationships(self, id):
@@ -1316,7 +1319,7 @@ class Mastodon:
                                   params)
 
     @api_version("1.0.0", "2.3.0", __DICT_VERSION_ACCOUNT)
-    def account_search(self, q, limit=None, following=False):
+    def account_search(self, q, limit=None, following=False) -> List[Account]:
         """
         Fetch matching accounts. Will lookup an account remotely if the search term is
         in the username@domain format and not yet in the database. Set `following` to
@@ -1329,7 +1332,7 @@ class Mastodon:
         if params["following"] == False:
             del params["following"]
 
-        return self.__api_request('GET', '/api/v1/accounts/search', params)
+        return Account.from_list(self.__api_request('GET', '/api/v1/accounts/search', params))
 
     @api_version("2.1.0", "2.1.0", __DICT_VERSION_LIST)
     def account_lists(self, id):
@@ -1345,7 +1348,7 @@ class Mastodon:
         return self.__api_request('GET', url, params)
 
     @api_version("3.4.0", "3.4.0", __DICT_VERSION_ACCOUNT)
-    def account_lookup(self, acct):
+    def account_lookup(self, acct) -> Account:
         """
         Look up an account from user@instance form (@instance allowed but not required for
         local accounts). Will only return accounts that the instance already knows about, 
@@ -1354,7 +1357,7 @@ class Mastodon:
 
         Returns an `account dict`_.
         """
-        return self.__api_request('GET', '/api/v1/accounts/lookup', self.__generate_params(locals()))
+        return Account(**self.__api_request('GET', '/api/v1/accounts/lookup', self.__generate_params(locals())))
     
     @api_version("3.5.0", "3.5.0", __DICT_VERSION_FAMILIAR_FOLLOWERS)
     def account_familiar_followers(self, id):
@@ -1454,20 +1457,20 @@ class Mastodon:
     # Reading data: Follow suggestions
     ###
     @api_version("2.4.3", "2.4.3", __DICT_VERSION_ACCOUNT)
-    def suggestions(self):
+    def suggestions(self) -> List[Account]:
         """
         Fetch follow suggestions for the logged-in user.
 
         Returns a list of `account dicts`_.
 
         """
-        return self.__api_request('GET', '/api/v1/suggestions')
+        return Account.from_list(self.__api_request('GET', '/api/v1/suggestions'))
 
     ###
     # Reading data: Follow suggestions
     ###
     @api_version("3.0.0", "3.0.0", __DICT_VERSION_ACCOUNT)
-    def directory(self, offset=None, limit=None, order=None, local=None):
+    def directory(self, offset=None, limit=None, order=None, local=None) -> List[Account]:
         """
         Fetch the contents of the profile directory, if enabled on the server.
 
@@ -1484,20 +1487,20 @@ class Mastodon:
 
         """
         params = self.__generate_params(locals())
-        return self.__api_request('GET', '/api/v1/directory', params)
+        return Account.from_list(self.__api_request('GET', '/api/v1/directory', params))
 
     ###
     # Reading data: Endorsements
     ###
     @api_version("2.5.0", "2.5.0", __DICT_VERSION_ACCOUNT)
-    def endorsements(self):
+    def endorsements(self) -> List[Account]:
         """
         Fetch list of users endorsed by the logged-in user.
 
         Returns a list of `account dicts`_.
 
         """
-        return self.__api_request('GET', '/api/v1/endorsements')
+        return Account.from_list(self.__api_request('GET', '/api/v1/endorsements'))
 
     ###
     # Reading data: Searching
@@ -1673,7 +1676,7 @@ class Mastodon:
         return self.__api_request('GET', '/api/v1/lists/{0}'.format(id))
 
     @api_version("2.1.0", "2.6.0", __DICT_VERSION_ACCOUNT)
-    def list_accounts(self, id, max_id=None, min_id=None, since_id=None, limit=None):
+    def list_accounts(self, id, max_id=None, min_id=None, since_id=None, limit=None) -> List[Account]:
         """
         Get the accounts that are on the given list.
 
@@ -1691,13 +1694,13 @@ class Mastodon:
             since_id = self.__unpack_id(since_id, dateconv=True)
 
         params = self.__generate_params(locals(), ['id'])
-        return self.__api_request('GET', '/api/v1/lists/{0}/accounts'.format(id))
+        return Account.from_list(self.__api_request('GET', '/api/v1/lists/{0}/accounts'.format(id)))
 
     ###
     # Reading data: Mutes and Blocks
     ###
     @api_version("1.1.0", "2.6.0", __DICT_VERSION_ACCOUNT)
-    def mutes(self, max_id=None, min_id=None, since_id=None, limit=None):
+    def mutes(self, max_id=None, min_id=None, since_id=None, limit=None) -> List[Account]:
         """
         Fetch a list of users muted by the logged-in user.
 
@@ -1713,10 +1716,10 @@ class Mastodon:
             since_id = self.__unpack_id(since_id, dateconv=True)
 
         params = self.__generate_params(locals())
-        return self.__api_request('GET', '/api/v1/mutes', params)
+        return Account.from_list(self.__api_request('GET', '/api/v1/mutes', params))
 
     @api_version("1.0.0", "2.6.0", __DICT_VERSION_ACCOUNT)
-    def blocks(self, max_id=None, min_id=None, since_id=None, limit=None):
+    def blocks(self, max_id=None, min_id=None, since_id=None, limit=None) -> List[Account]:
         """
         Fetch a list of users blocked by the logged-in user.
 
@@ -1732,7 +1735,7 @@ class Mastodon:
             since_id = self.__unpack_id(since_id, dateconv=True)
 
         params = self.__generate_params(locals())
-        return self.__api_request('GET', '/api/v1/blocks', params)
+        return Account.from_list(self.__api_request('GET', '/api/v1/blocks', params))
 
     ###
     # Reading data: Reports
@@ -1777,7 +1780,7 @@ class Mastodon:
     # Reading data: Follow requests
     ###
     @api_version("1.0.0", "2.6.0", __DICT_VERSION_ACCOUNT)
-    def follow_requests(self, max_id=None, min_id=None, since_id=None, limit=None):
+    def follow_requests(self, max_id=None, min_id=None, since_id=None, limit=None) -> List[Account]:
         """
         Fetch the logged-in user's incoming follow requests.
 
@@ -1793,7 +1796,7 @@ class Mastodon:
             since_id = self.__unpack_id(since_id, dateconv=True)
 
         params = self.__generate_params(locals())
-        return self.__api_request('GET', '/api/v1/follow_requests', params)
+        return Account.from_list(self.__api_request('GET', '/api/v1/follow_requests', params))
 
     ###
     # Reading data: Domain blocks
@@ -2439,14 +2442,14 @@ class Mastodon:
         return self.__api_request('POST', url, params)
 
     @api_version("1.0.0", "2.1.0", __DICT_VERSION_ACCOUNT)
-    def follows(self, uri):
+    def follows(self, uri) -> Account:
         """
         Follow a remote user by uri (username@domain).
 
         Returns a `account dict`_.
         """
         params = self.__generate_params(locals())
-        return self.__api_request('POST', '/api/v1/follows', params)
+        return Account(**self.__api_request('POST', '/api/v1/follows', params))
 
     @api_version("1.0.0", "1.4.0", __DICT_VERSION_RELATIONSHIP)
     def account_unfollow(self, id):
@@ -2524,7 +2527,7 @@ class Mastodon:
                                    avatar=None, avatar_mime_type=None,
                                    header=None, header_mime_type=None,
                                    locked=None, bot=None,
-                                   discoverable=None, fields=None):
+                                   discoverable=None, fields=None) -> Account:
         """
         Update the profile for the currently logged-in user.
 
@@ -2572,7 +2575,7 @@ class Mastodon:
             files["header"] = self.__load_media_file(header, header_mime_type)
 
         params = self.__generate_params(params_initial)
-        return self.__api_request('PATCH', '/api/v1/accounts/update_credentials', params, files=files)
+        return Account(**self.__api_request('PATCH', '/api/v1/accounts/update_credentials', params, files=files))
 
     @api_version("2.5.0", "2.5.0", __DICT_VERSION_RELATIONSHIP)
     def account_pin(self, id):
